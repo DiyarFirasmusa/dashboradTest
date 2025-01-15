@@ -1,7 +1,7 @@
 <template>
-    <v-app id="inspire">
-      <v-navigation-drawer v-model="drawer">
-        <v-sheet class=" p-4 pb-6">
+    <v-app id="inspire" class="">
+      <v-navigation-drawer v-model="drawer" >
+        <v-sheet class="custom-vSheet" >
           <h1>hello world</h1>
         </v-sheet>
   
@@ -20,7 +20,7 @@
   
       <v-main class="">     
         <div class=" p-6">
-            <NavBar/>
+            <NavBar :showw = 'show'/>
             <slot/>
         </div>
       </v-main>
@@ -30,11 +30,26 @@
   <script setup>
     import { ref } from 'vue'
     import NavBar from './NavBar.vue'
+
+    defineProps({
+      show: Boolean
+    })
   
     const links = [
       ['arrow_downward', 'Statistics', '/Statistics'],
       ['send', 'Services' , '/Services'],
+      ['people', 'Shepherds' , '/Shepherds'],
+      ['Scroll', 'ScrollBar' , '/ScrollBar'],
+      ['Project', 'Project' , '/Project'],
+      ['Artacl', 'Artacl' , '/Artacl'],
+      ['About', 'About' , '/About'],
     ]
   
     const drawer = ref(null)
   </script>
+
+  <style>
+    .custom-vSheet {
+      padding: 1.23rem !important;
+    }
+  </style>

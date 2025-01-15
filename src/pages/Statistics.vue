@@ -5,7 +5,7 @@
                 <template v-slot:activator="{ props: activatorProps }">
                     <v-btn
                     v-bind="activatorProps"
-                    color="surface-variant"
+                    color="blue-darken-1"
                     text="Open Dialog"
                     variant="flat"
                     ></v-btn>

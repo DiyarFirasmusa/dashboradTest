@@ -1,6 +1,6 @@
 <template>
   <v-container>
-    <v-btn color="primary" @click="openDialog" block>Add New CPU</v-btn>
+    <v-btn color="primary" @click="openDialog('add')" block>Add New CPU</v-btn>
 
     <v-data-table
       v-model:page="page"
@@ -29,7 +29,14 @@
         ></v-text-field>
       </template>
   
+      <template v-slot:item.image="{ item }">
+        <v-avatar size="48">
+          <img :src="item.image" alt="CPU Image">
+        </v-avatar>
+      </template>
+  
       <template v-slot:item.actions="{ item }">
+        <v-btn color="green" @click="openDialog('edit', item)">Edit</v-btn>
         <v-btn color="red" @click="deleteItem(item)">Delete</v-btn>
       </template>
   
@@ -43,14 +50,18 @@
       </template>
     </v-data-table>
 
-    <!-- Dialog for adding new CPU -->
     <v-dialog v-model="dialog" max-width="500px">
       <v-card>
-        <v-card-title>Add New CPU</v-card-title>
+        <v-card-title>{{ dialogType === 'add' ? 'Add New CPU' : 'Edit CPU' }}</v-card-title>
         <v-card-text>
           <v-text-field
             v-model="newItem.name"
             label="CPU Model"
+            required
+          ></v-text-field>
+          <v-text-field
+            v-model="newItem.image"
+            label="Image URL"
             required
           ></v-text-field>
           <v-text-field
@@ -83,7 +94,7 @@
         </v-card-text>
         <v-card-actions>
           <v-btn @click="closeDialog" color="secondary">Cancel</v-btn>
-          <v-btn @click="addItem" color="primary">Add</v-btn>
+          <v-btn @click="saveItem" color="primary">{{ dialogType === 'add' ? 'Add' : 'Save' }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -97,34 +108,46 @@ export default {
     page: 1,
     itemsPerPage: 5,
     dialog: false,
+    dialogType: 'add',
     newItem: {
       name: '',
+      image: '',
       cores: null,
       threads: null,
       baseClock: '',
       boostClock: '',
       tdp: ''
     },
+    editingIndex: -1,
     headers: [
+      { title: 'Image', align: 'center', key: 'image' },
       { title: 'CPU Model', align: 'start', key: 'name' },
       { title: 'Cores', align: 'end', key: 'cores' },
       { title: 'Threads', align: 'end', key: 'threads' },
       { title: 'Base Clock', align: 'end', key: 'baseClock' },
       { title: 'Boost Clock', align: 'end', key: 'boostClock' },
       { title: 'TDP (W)', align: 'end', key: 'tdp' },
-      { title: 'Actions', key: 'actions' },  // New column for delete button
+      { title: 'Actions', key: 'actions' },
     ],
     items: [
-      { name: 'Intel Core i9-11900K', cores: 8, threads: 16, baseClock: '3.5 GHz', boostClock: '5.3 GHz', tdp: '125W' },
-      { name: 'AMD Ryzen 9 5950X', cores: 16, threads: 32, baseClock: '3.4 GHz', boostClock: '4.9 GHz', tdp: '105W' },
-      { name: 'Intel Core i7-10700K', cores: 8, threads: 16, baseClock: '3.8 GHz', boostClock: '5.1 GHz', tdp: '125W' },
-      { name: 'AMD Ryzen 5 5600X', cores: 6, threads: 12, baseClock: '3.7 GHz', boostClock: '4.6 GHz', tdp: '65W' },
-      { name: 'Intel Core i5-10600K', cores: 6, threads: 12, baseClock: '4.1 GHz', boostClock: '4.8 GHz', tdp: '125W' },
-      { name: 'AMD Ryzen 7 5800X', cores: 8, threads: 16, baseClock: '3.8 GHz', boostClock: '4.7 GHz', tdp: '105W' },
-      { name: 'Intel Core i3-10100', cores: 4, threads: 8, baseClock: '3.6 GHz', boostClock: '4.3 GHz', tdp: '65W' },
-      { name: 'AMD Ryzen 3 3300X', cores: 4, threads: 8, baseClock: '3.8 GHz', boostClock: '4.3 GHz', tdp: '65W' },
-      { name: 'Intel Pentium Gold G6400', cores: 2, threads: 4, baseClock: '4.0 GHz', tdp: '58W' },
-      { name: 'AMD Athlon 3000G', cores: 2, threads: 4, baseClock: '3.5 GHz', tdp: '35W' },
+      {
+        name: 'Intel Core i9-11900K',
+        image: 'https://via.placeholder.com/48',
+        cores: 8,
+        threads: 16,
+        baseClock: '3.5 GHz',
+        boostClock: '5.3 GHz',
+        tdp: '125W',
+      },
+      {
+        name: 'AMD Ryzen 9 5950X',
+        image: 'https://via.placeholder.com/48',
+        cores: 16,
+        threads: 32,
+        baseClock: '3.4 GHz',
+        boostClock: '4.9 GHz',
+        tdp: '105W',
+      },
     ],
   }),
 
@@ -140,15 +163,14 @@ export default {
   },
 
   methods: {
-
-    deleteItem(item) {
-      const index = this.items.findIndex(i => i.name === item.name);
-      if (index !== -1) {
-        this.items.splice(index, 1);  // Remove the item from the list
+    openDialog(type, item = null) {
+      this.dialogType = type;
+      if (type === 'edit' && item) {
+        this.editingIndex = this.items.findIndex(i => i.name === item.name);
+        this.newItem = { ...item };
+      } else {
+        this.resetNewItem();
       }
-    },
-
-    openDialog() {
       this.dialog = true;
     },
 
@@ -157,8 +179,17 @@ export default {
       this.resetNewItem();
     },
 
+    saveItem() {
+      if (this.dialogType === 'add') {
+        this.addItem();
+      } else if (this.dialogType === 'edit' && this.editingIndex !== -1) {
+        this.items.splice(this.editingIndex, 1, { ...this.newItem });
+        this.closeDialog();
+      }
+    },
+
     addItem() {
-      if (this.newItem.name && this.newItem.cores && this.newItem.threads && this.newItem.baseClock && this.newItem.boostClock && this.newItem.tdp) {
+      if (this.newItem.name && this.newItem.image && this.newItem.cores && this.newItem.threads && this.newItem.baseClock && this.newItem.boostClock && this.newItem.tdp) {
         this.items.push({ ...this.newItem });
         this.closeDialog();
       }
@@ -167,12 +198,21 @@ export default {
     resetNewItem() {
       this.newItem = {
         name: '',
+        image: '',
         cores: null,
         threads: null,
         baseClock: '',
         boostClock: '',
-        tdp: ''
+        tdp: '',
       };
+      this.editingIndex = -1;
+    },
+
+    deleteItem(item) {
+      const index = this.items.findIndex(i => i.name === item.name);
+      if (index !== -1) {
+        this.items.splice(index, 1);
+      }
     },
   },
 };
