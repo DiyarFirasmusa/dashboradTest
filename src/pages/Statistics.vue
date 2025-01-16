@@ -1,18 +1,18 @@
 <template>
     <div>
-      <v-toolbar class="pl-4">
+      <v-toolbar class="pl-2 bg-grey-lighten-2 custom-toolbar">
         <v-dialog max-width="500" v-model="dialog">
           <template v-slot:activator="{ props: activatorProps }">
             <v-btn
               v-bind="activatorProps"
               color="blue-darken-1"
-              text="Open Dialog"
+              text="Edit Statistics"
               variant="flat"
             ></v-btn>
           </template>
   
           <template v-slot:default="{ isActive }">
-            <v-card title="Edit">
+            <v-card title="Edit Statistics" class="bg-white">
               <v-form v-model="valid">
                 <v-container>
                   <v-row>
@@ -20,7 +20,7 @@
                       <v-text-field
                         v-model="tempValues.projevtComplate"
                         :counter="10"
-                        label="num1"
+                        label="Completed projects"
                         required
                       ></v-text-field>
                     </v-col>
@@ -29,7 +29,7 @@
                       <v-text-field
                         v-model="tempValues.projectStatic"
                         :counter="10"
-                        label="num2"
+                        label="installed equipment"
                         required
                       ></v-text-field>
                     </v-col>
@@ -37,7 +37,7 @@
                     <v-col cols="12" md="4">
                       <v-text-field
                         v-model="tempValues.resantl"
-                        label="num3"
+                        label="Investments"
                         required
                       ></v-text-field>
                     </v-col>
@@ -45,8 +45,8 @@
                 </v-container>
               </v-form>
               <v-card-actions class="justify-end">
-                <v-btn color="red" text @click="cancelDialog">Cancel</v-btn>
-                <v-btn color="green" text @click="saveChanges">Save</v-btn>
+                <v-btn color="black" class="bg-grey-lighten-2" text @click="cancelDialog">Cancel</v-btn>
+                <v-btn color="white" class="bg-blue-darken-1" text @click="saveChanges">Save</v-btn>
               </v-card-actions>
             </v-card>
           </template>
@@ -55,22 +55,22 @@
   
       <div class="mt-4 flex flex-wrap justify-between gap-4">
         <div
-          class="flex-grow min-w-[250px] min-h-[200px] bg-white flex flex-col justify-center items-center"
+          class="flex-grow min-w-[250px] min-h-[120px] bg-grey-lighten-2 flex flex-col justify-center items-center"
         >
-          <span class="text-4xl">{{ projevtComplate }}</span>
-          <p class="text-2xl">hello</p>
+          <span class="text-3xl text-blue">{{ projevtComplate }}</span>
+          <p class=" text-sm">Completed projects</p>
         </div>
         <div
-          class="flex-grow min-w-[250px] min-h-[200px] bg-white flex flex-col justify-center items-center"
+          class="flex-grow min-w-[250px] min-h-[120px] bg-grey-lighten-2 flex flex-col justify-center items-center"
         >
-          <span class="text-4xl">{{ projectStatic }}</span>
-          <p class="text-2xl">hello</p>
+          <span class="text-3xl text-blue">{{ projectStatic }}</span>
+          <p class=" text-sm">installed equipment</p>
         </div>
         <div
-          class="flex-grow min-w-[250px] min-h-[200px] bg-white flex flex-col justify-center items-center"
+          class="flex-grow min-w-[250px] min-h-[120px] bg-grey-lighten-2 flex flex-col justify-center items-center"
         >
-          <span class="text-4xl">{{ resantl }}</span>
-          <p class="text-2xl">hello</p>
+          <span class="text-3xl text-blue">{{ resantl }}</span>
+          <p class=" text-sm">Investments</p>
         </div>
       </div>
     </div>
@@ -114,4 +114,7 @@
     });
   };
   </script>
+
+  <style>
+    </style>
   
