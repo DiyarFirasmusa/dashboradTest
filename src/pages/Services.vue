@@ -1,7 +1,6 @@
 <template>
   <v-container style="padding: 0; margin: 0; " class="bg-white">
-    
-
+  
     <v-data-table
       v-model:page="page"
       :headers="headers"
@@ -12,10 +11,10 @@
       class="bg-white"
     >
       <template v-slot:top>
-        <div class="flex justify-between">
-          <v-btn color="blue" @click="openDialog('add')" elevation="0" >Add New CPU</v-btn>
+        <div class="flex justify-center ">
+          <v-btn style="margin-top: 0.6rem; height: 55px;"  color="blue" @click="openDialog('add')" elevation="0" >Add New CPU</v-btn>
           <v-row>
-            <v-col cols="12" md="4">
+            <v-col cols="12" md="12">
               <v-text-field
                 v-model="search"
                 class="pa-2"
@@ -113,177 +112,167 @@
   </v-container>
 </template>
 
-<script>
-export default {
-  data: () => ({
-    search: '',
-    page: 1,
-    itemsPerPage: 5,
-    dialog: false,
-    dialogType: 'add',
-    newItem: {
-      name: '',
-      image: '',
-      cores: null,
-      threads: null,
-      baseClock: '',
-      boostClock: '',
-      tdp: ''
-    },
-    editingIndex: -1,
-    headers: [
-      { title: 'Image', align: 'center', key: 'image' },
-      { title: 'CPU Model', align: 'start', key: 'name' },
-      { title: 'Cores', align: 'end', key: 'cores' },
-      { title: 'Threads', align: 'end', key: 'threads' },
-      { title: 'Base Clock', align: 'end', key: 'baseClock' },
-      { title: 'Boost Clock', align: 'end', key: 'boostClock' },
-      { title: 'TDP (W)', align: 'end', key: 'tdp' },
-      { title: 'Delete', key: 'Delete' },
-      { title: 'Edit', key: 'Edit' },
-    ],
-    items: [
-      {
-        name: 'Intel Core i9-11900K',
-        image: 'https://via.placeholder.com/48',
-        cores: 8,
-        threads: 16,
-        baseClock: '3.5 GHz',
-        boostClock: '5.3 GHz',
-        tdp: '125W',
-      },
-      {
-        name: 'AMD Ryzen 9 5950X',
-        image: 'https://via.placeholder.com/48',
-        cores: 16,
-        threads: 32,
-        baseClock: '3.4 GHz',
-        boostClock: '4.9 GHz',
-        tdp: '105W',
-      },
-      {
-        name: 'Intel Core i9-11900K',
-        image: 'https://via.placeholder.com/48',
-        cores: 8,
-        threads: 16,
-        baseClock: '3.5 GHz',
-        boostClock: '5.3 GHz',
-        tdp: '125W',
-      },
-      {
-        name: 'Intel Core i9-11900K',
-        image: 'https://via.placeholder.com/48',
-        cores: 8,
-        threads: 16,
-        baseClock: '3.5 GHz',
-        boostClock: '5.3 GHz',
-        tdp: '125W',
-      },
-      {
-        name: 'Intel Core i9-11900K',
-        image: 'https://via.placeholder.com/48',
-        cores: 8,
-        threads: 16,
-        baseClock: '3.5 GHz',
-        boostClock: '5.3 GHz',
-        tdp: '125W',
-      },
-      {
-        name: 'Intel Core i9-11900K',
-        image: 'https://via.placeholder.com/48',
-        cores: 8,
-        threads: 16,
-        baseClock: '3.5 GHz',
-        boostClock: '5.3 GHz',
-        tdp: '125W',
-      },
-      {
-        name: 'Intel Core i9-11900K',
-        image: 'https://via.placeholder.com/48',
-        cores: 8,
-        threads: 16,
-        baseClock: '3.5 GHz',
-        boostClock: '5.3 GHz',
-        tdp: '125W',
-      },
-      {
-        name: 'Intel Core i9-11900K',
-        image: 'https://via.placeholder.com/48',
-        cores: 8,
-        threads: 16,
-        baseClock: '3.5 GHz',
-        boostClock: '5.3 GHz',
-        tdp: '125W',
-      },
-    ],
-  }),
+<script setup>
+import { ref, computed } from 'vue';
 
-  computed: {
-    filteredItems() {
-      return this.items.filter(item =>
-        item.name.toUpperCase().includes(this.search.toUpperCase())
-      );
-    },
-    pageCount() {
-      return Math.ceil(this.filteredItems.length / this.itemsPerPage);
-    },
+const search = ref('');
+const page = ref(1);
+const itemsPerPage = ref(5);
+const dialog = ref(false);
+const dialogType = ref('add');
+const editingIndex = ref(-1);
+const newItem = ref({
+  name: '',
+  image: '',
+  cores: null,
+  threads: null,
+  baseClock: '',
+  boostClock: '',
+  tdp: ''
+});
+
+const headers = [
+  { title: 'Image', align: 'center', key: 'image' },
+  { title: 'CPU Model', align: 'start', key: 'name' },
+  { title: 'Cores', align: 'end', key: 'cores' },
+  { title: 'Threads', align: 'end', key: 'threads' },
+  { title: 'Base Clock', align: 'end', key: 'baseClock' },
+  { title: 'Boost Clock', align: 'end', key: 'boostClock' },
+  { title: 'TDP (W)', align: 'end', key: 'tdp' },
+  { title: 'Delete', key: 'Delete' },
+  { title: 'Edit', key: 'Edit' },
+];
+
+const items = ref([
+  {
+    name: 'Intel Core i9-11900K',
+    image: 'https://via.placeholder.com/48',
+    cores: 8,
+    threads: 16,
+    baseClock: '3.5 GHz',
+    boostClock: '5.3 GHz',
+    tdp: '125W',
   },
-
-  methods: {
-    openDialog(type, item = null) {
-      this.dialogType = type;
-      if (type === 'edit' && item) {
-        this.editingIndex = this.items.findIndex(i => i.name === item.name);
-        this.newItem = { ...item };
-      } else {
-        this.resetNewItem();
-      }
-      this.dialog = true;
-    },
-
-    closeDialog() {
-      this.dialog = false;
-      this.resetNewItem();
-    },
-
-    saveItem() {
-      if (this.dialogType === 'add') {
-        this.addItem();
-      } else if (this.dialogType === 'edit' && this.editingIndex !== -1) {
-        this.items.splice(this.editingIndex, 1, { ...this.newItem });
-        this.closeDialog();
-      }
-    },
-
-    addItem() {
-      if (this.newItem.name && this.newItem.image && this.newItem.cores && this.newItem.threads && this.newItem.baseClock && this.newItem.boostClock && this.newItem.tdp) {
-        this.items.push({ ...this.newItem });
-        this.closeDialog();
-      }
-    },
-
-    resetNewItem() {
-      this.newItem = {
-        name: '',
-        image: '',
-        cores: null,
-        threads: null,
-        baseClock: '',
-        boostClock: '',
-        tdp: '',
-      };
-      this.editingIndex = -1;
-    },
-
-    deleteItem(item) {
-      const index = this.items.findIndex(i => i.name === item.name);
-      if (index !== -1) {
-        this.items.splice(index, 1);
-      }
-    },
+  {
+    name: 'Intel Core i9-11900K',
+    image: 'https://via.placeholder.com/48',
+    cores: 8,
+    threads: 16,
+    baseClock: '3.5 GHz',
+    boostClock: '5.3 GHz',
+    tdp: '125W',
   },
-};
+  {
+    name: 'Intel Core i9-11900K',
+    image: 'https://via.placeholder.com/48',
+    cores: 8,
+    threads: 16,
+    baseClock: '3.5 GHz',
+    boostClock: '5.3 GHz',
+    tdp: '125W',
+  },
+  {
+    name: 'Intel Core i9-11900K',
+    image: 'https://via.placeholder.com/48',
+    cores: 8,
+    threads: 16,
+    baseClock: '3.5 GHz',
+    boostClock: '5.3 GHz',
+    tdp: '125W',
+  },
+  {
+    name: 'Intel Core i9-11900K',
+    image: 'https://via.placeholder.com/48',
+    cores: 8,
+    threads: 16,
+    baseClock: '3.5 GHz',
+    boostClock: '5.3 GHz',
+    tdp: '125W',
+  },
+  {
+    name: 'AMD Ryzen 9 5950X',
+    image: 'https://via.placeholder.com/48',
+    cores: 16,
+    threads: 32,
+    baseClock: '3.4 GHz',
+    boostClock: '4.9 GHz',
+    tdp: '105W',
+  },
+  
+  
+]);
+
+const filteredItems = computed(() => {
+  return items.value.filter(item =>
+    item.name.toUpperCase().includes(search.value.toUpperCase())
+  );
+});
+
+const pageCount = computed(() => {
+  return Math.ceil(filteredItems.value.length / itemsPerPage.value);
+});
+
+function openDialog(type, item = null) {
+  dialogType.value = type;
+  if (type === 'edit' && item) {
+    editingIndex.value = items.value.findIndex(i => i.name === item.name);
+    newItem.value = { ...item };
+  } else {
+    resetNewItem();
+  }
+  dialog.value = true;
+}
+
+function closeDialog() {
+  dialog.value = false;
+  resetNewItem();
+}
+
+function saveItem() {
+  if (dialogType.value === 'add') {
+    addItem();
+  } else if (dialogType.value === 'edit' && editingIndex.value !== -1) {
+    items.value.splice(editingIndex.value, 1, { ...newItem.value });
+    closeDialog();
+  }
+}
+
+function addItem() {
+  if (
+    newItem.value.name &&
+    newItem.value.image &&
+    newItem.value.cores &&
+    newItem.value.threads &&
+    newItem.value.baseClock &&
+    newItem.value.boostClock &&
+    newItem.value.tdp
+  ) {
+    items.value.push({ ...newItem.value });
+    closeDialog();
+  }
+}
+
+function resetNewItem() {
+  newItem.value = {
+    name: '',
+    image: '',
+    cores: null,
+    threads: null,
+    baseClock: '',
+    boostClock: '',
+    tdp: ''
+  };
+  editingIndex.value = -1;
+}
+
+function deleteItem(item) {
+  const index = items.value.findIndex(i => i.name === item.name);
+  if (index !== -1) {
+    items.value.splice(index, 1);
+  }
+}
 </script>
+
 
 <style>
   .custom-car-action {

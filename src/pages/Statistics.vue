@@ -104,14 +104,8 @@
   const saveChanges = () => {
     projevtComplate.value = tempValues.value.projevtComplate;
     projectStatic.value = tempValues.value.projectStatic;
-    resantl.value = tempValues.value.resantl;
-  
+    resantl.value = tempValues.value.resan
     dialog.value = false;
-    console.log("Values saved:", {
-      projevtComplate: projevtComplate.value,
-      projectStatic: projectStatic.value,
-      resantl: resantl.value,
-    });
   };
   </script>
 
