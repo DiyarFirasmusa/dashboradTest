@@ -3,7 +3,7 @@
       <v-navigation-drawer v-model="drawer" class="bg-grey-lighten-2" >
         <v-sheet class="custom-vSheet bg-grey-lighten-2 border-r flex justify-start items-center gap-2">
           <v-icon icon="$vuetify" size="x-large" color="blue"></v-icon>
-          <h1 class="text-xl">Vercal Pro</h1>
+          <h1  class ="text-xl">Vercal Pro</h1>
         </v-sheet>
   
         <v-divider></v-divider>

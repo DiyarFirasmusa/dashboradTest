@@ -1,6 +1,5 @@
 <template>
-  <v-container style="padding: 0; margin: 0; " class="bg-white">
-  
+  <v-container style="padding: 0; margin: 0;" class="bg-white">
     <v-data-table
       v-model:page="page"
       :headers="headers"
@@ -12,19 +11,16 @@
     >
       <template v-slot:top>
         <div class="flex justify-center ">
-          <v-btn style="margin-top: 0.6rem; height: 55px;"  color="blue" @click="openDialog('add')" elevation="0" >Add New CPU</v-btn>
+          <v-btn style="margin-top: 0.6rem; height: 55px;" color="blue" @click="openDialog('add')" elevation="0">
+            Add New CPU
+          </v-btn>
           <v-row>
             <v-col cols="12" md="12">
-              <v-text-field
-                v-model="search"
-                class="pa-2"
-                label="Search (UPPER CASE ONLY)"
-              ></v-text-field>
+              <v-text-field v-model="search" class="pa-2" label="Search (UPPER CASE ONLY)"></v-text-field>
             </v-col>
           </v-row>
         </div>
 
-  
         <v-text-field
           :model-value="itemsPerPage"
           class="pa-2"
@@ -36,72 +32,88 @@
           @update:model-value="itemsPerPage = parseInt($event, 10)"
         ></v-text-field>
       </template>
-  
+
       <template v-slot:item.image="{ item }">
         <v-avatar size="48">
           <img :src="item.image" alt="CPU Image">
         </v-avatar>
       </template>
-  
+
       <template v-slot:item.Delete="{ item }">
-        <v-icon  icon="delete" color="red" @click="deleteItem(item)" class="ml-2"></v-icon>
+        <v-icon icon="delete" color="red" @click="deleteItem(item)" class="ml-2"></v-icon>
       </template>
 
       <template v-slot:item.Edit="{ item }">
-        <v-icon  icon="edit" color="green" @click="openDialog('edit', item)" class="ml-2"></v-icon>
+        <v-icon icon="edit" color="green" @click="openDialog('edit', item)" class="ml-2"></v-icon>
       </template>
-  
+
       <template v-slot:bottom>
         <div class="text-center pt-2">
-          <v-pagination
-            v-model="page"
-            :length="pageCount"
-          ></v-pagination>
+          <v-pagination v-model="page" :length="pageCount"></v-pagination>
         </div>
       </template>
     </v-data-table>
+
+    <v-dialog v-model="confirmDialog" max-width="400">
+      <v-card>
+        <v-card-title class="text-h6">Confirm Delete</v-card-title>
+        <v-card-text>Are you sure you want to delete this item?</v-card-text>
+        <v-card-actions>
+          <v-btn color="secondary" text @click="cancelDelete">Cancel</v-btn>
+          <v-btn color="red" text @click="confirmDeleteItem">Delete</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <v-dialog v-model="dialog" max-width="500px">
       <v-card>
         <v-card-title>{{ dialogType === 'add' ? 'Add New CPU' : 'Edit CPU' }}</v-card-title>
         <v-card-text>
-          <v-text-field
-            v-model="newItem.name"
-            label="CPU Model"
-            required
-          ></v-text-field>
-          <v-text-field
-            v-model="newItem.image"
-            label="Image URL"
-            required
-          ></v-text-field>
-          <v-text-field
-            v-model="newItem.cores"
-            label="Cores"
-            type="number"
-            required
-          ></v-text-field>
-          <v-text-field
-            v-model="newItem.threads"
-            label="Threads"
-            type="number"
-            required
-          ></v-text-field>
-          <v-text-field
-            v-model="newItem.baseClock"
-            label="Base Clock"
-            required
-          ></v-text-field>
-          <v-text-field
-            v-model="newItem.boostClock"
-            label="Boost Clock"
-            required
-          ></v-text-field>
-          <v-text-field
-            v-model="newItem.tdp"
-            label="TDP (W)"
-            required
-          ></v-text-field>
+          <v-form ref="form">
+            <v-text-field
+              v-model="newItem.name"
+              label="CPU Model"
+              :rules="[required]"
+            ></v-text-field>
+            <v-text-field
+              v-model="newItem.image"
+              label="Image URL"
+              :rules="[required, validUrl]"
+              
+            ></v-text-field>
+            <v-text-field
+              v-model="newItem.cores"
+              label="Cores"
+              type="number"
+              :rules="[required, isNumber]"
+              
+            ></v-text-field>
+            <v-text-field
+              v-model="newItem.threads"
+              label="Threads"
+              type="number"
+              :rules="[required, isNumber]"
+              
+            ></v-text-field>
+            <v-text-field
+              v-model="newItem.baseClock"
+              label="Base Clock"
+              :rules="[required, isNumber]"
+              
+            ></v-text-field>
+            <v-text-field
+              v-model="newItem.boostClock"
+              label="Boost Clock"
+              :rules="[required, isNumber]"
+              
+            ></v-text-field>
+            <v-text-field
+              v-model="newItem.tdp"
+              label="TDP (W)"
+              :rules="[required, isNumber]"
+              
+            ></v-text-field>
+          </v-form>
         </v-card-text>
         <v-card-actions>
           <v-btn @click="closeDialog" color="secondary">Cancel</v-btn>
@@ -119,8 +131,10 @@ const search = ref('');
 const page = ref(1);
 const itemsPerPage = ref(5);
 const dialog = ref(false);
+const confirmDialog = ref(false);
 const dialogType = ref('add');
-const editingIndex = ref(-1);
+const deleteTarget = ref(null);
+
 const newItem = ref({
   name: '',
   image: '',
@@ -130,6 +144,8 @@ const newItem = ref({
   boostClock: '',
   tdp: ''
 });
+
+const form = ref(null);
 
 const headers = [
   { title: 'Image', align: 'center', key: 'image' },
@@ -144,62 +160,8 @@ const headers = [
 ];
 
 const items = ref([
-  {
-    name: 'Intel Core i9-11900K',
-    image: 'https://via.placeholder.com/48',
-    cores: 8,
-    threads: 16,
-    baseClock: '3.5 GHz',
-    boostClock: '5.3 GHz',
-    tdp: '125W',
-  },
-  {
-    name: 'Intel Core i9-11900K',
-    image: 'https://via.placeholder.com/48',
-    cores: 8,
-    threads: 16,
-    baseClock: '3.5 GHz',
-    boostClock: '5.3 GHz',
-    tdp: '125W',
-  },
-  {
-    name: 'Intel Core i9-11900K',
-    image: 'https://via.placeholder.com/48',
-    cores: 8,
-    threads: 16,
-    baseClock: '3.5 GHz',
-    boostClock: '5.3 GHz',
-    tdp: '125W',
-  },
-  {
-    name: 'Intel Core i9-11900K',
-    image: 'https://via.placeholder.com/48',
-    cores: 8,
-    threads: 16,
-    baseClock: '3.5 GHz',
-    boostClock: '5.3 GHz',
-    tdp: '125W',
-  },
-  {
-    name: 'Intel Core i9-11900K',
-    image: 'https://via.placeholder.com/48',
-    cores: 8,
-    threads: 16,
-    baseClock: '3.5 GHz',
-    boostClock: '5.3 GHz',
-    tdp: '125W',
-  },
-  {
-    name: 'AMD Ryzen 9 5950X',
-    image: 'https://via.placeholder.com/48',
-    cores: 16,
-    threads: 32,
-    baseClock: '3.4 GHz',
-    boostClock: '4.9 GHz',
-    tdp: '105W',
-  },
-  
-  
+  { name: 'CPU 1', image: 'url1', cores: 4, threads: 8, baseClock: '3.6GHz', boostClock: '4.2GHz', tdp: 65 },
+  { name: 'CPU 2', image: 'url2', cores: 6, threads: 12, baseClock: '3.8GHz', boostClock: '4.5GHz', tdp: 95 },
 ]);
 
 const filteredItems = computed(() => {
@@ -212,10 +174,31 @@ const pageCount = computed(() => {
   return Math.ceil(filteredItems.value.length / itemsPerPage.value);
 });
 
+function deleteItem(item) {
+  deleteTarget.value = item;
+  confirmDialog.value = true;
+}
+
+function confirmDeleteItem() {
+  if (deleteTarget.value) {
+    const index = items.value.indexOf(deleteTarget.value);
+    if (index !== -1) {
+      items.value.splice(index, 1); 
+    }
+  }
+  confirmDialog.value = false;
+  deleteTarget.value = null;
+}
+
+function cancelDelete() {
+  confirmDialog.value = false;
+  deleteTarget.value = null;
+}
+
 function openDialog(type, item = null) {
   dialogType.value = type;
   if (type === 'edit' && item) {
-    editingIndex.value = items.value.findIndex(i => i.name === item.name);
+    editingIndex.value = items.value.indexOf(item); 
     newItem.value = { ...item };
   } else {
     resetNewItem();
@@ -229,26 +212,14 @@ function closeDialog() {
 }
 
 function saveItem() {
-  if (dialogType.value === 'add') {
-    addItem();
-  } else if (dialogType.value === 'edit' && editingIndex.value !== -1) {
-    items.value.splice(editingIndex.value, 1, { ...newItem.value });
-    closeDialog();
-  }
-}
-
-function addItem() {
-  if (
-    newItem.value.name &&
-    newItem.value.image &&
-    newItem.value.cores &&
-    newItem.value.threads &&
-    newItem.value.baseClock &&
-    newItem.value.boostClock &&
-    newItem.value.tdp
-  ) {
-    items.value.push({ ...newItem.value });
-    closeDialog();
+  if ($refs.form.value.validate()) {
+    if (dialogType.value === 'add') {
+      items.value.push({ ...newItem.value });
+      closeDialog();
+    } else if (dialogType.value === 'edit' && editingIndex.value !== -1) {
+      items.value.splice(editingIndex.value, 1, { ...newItem.value });
+      closeDialog();
+    }
   }
 }
 
@@ -262,20 +233,8 @@ function resetNewItem() {
     boostClock: '',
     tdp: ''
   };
-  editingIndex.value = -1;
 }
-
-function deleteItem(item) {
-  const index = items.value.findIndex(i => i.name === item.name);
-  if (index !== -1) {
-    items.value.splice(index, 1);
-  }
-}
+const required = value => !!value || 'This field is required';
+const isNumber = value => !isNaN(value) || 'This field must be a valid number';
+const validUrl = value => /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/.test(value) || 'Please enter a valid URL';
 </script>
-
-
-<style>
-  .custom-car-action {
-    padding: 1rem !important;
-  }
-</style>
