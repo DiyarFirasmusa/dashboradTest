@@ -44,7 +44,7 @@
       <v-card>
         <v-card-title>{{ isEditing ? 'Edit Card' : 'Add New Card' }}</v-card-title>
         <v-card-text>
-          <v-form ref="form">
+          <v-form v-model="valid">
             <VTextField v-model="newItem.title" label="Title" :rules="[required]" ></VTextField>
             <VTextField v-model="newItem.description" label="Card Description" :rules="[required]" ></VTextField>
             <VTextField v-model="newItem.imgSrc" label="Image URL" :rules="[required, validUrl]" ></VTextField>
@@ -62,12 +62,12 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed,watch  } from 'vue';
 import { VForm, VTextField } from 'vuetify/components';
+
 
 const dialog = ref(false);
 const deleteDialog = ref(false);
-const form = ref(null);
 
 const items = ref([
   { title: 'Card Title 1', description: 'Some interesting description goes here.', imgSrc: 'https://via.placeholder.com/400' },
@@ -97,12 +97,15 @@ const paginatedItems = computed(() => {
   return items.value.slice(start, end);
 });
 
+// قوانين التحقق
 const required = value => !!value || 'This field is required';
 const validUrl = value => /^(https?|chrome):\/\/[^\s$.?#].[^\s]*$/.test(value) || 'Please enter a valid URL';
 
-function openDialog(mode = 'add', item = null) {
+const valid = ref(false); // متغير للتحقق من صحة النموذج
+
+function openDialog(mode, item) {
   isEditing.value = (mode === 'edit');
-  if (isEditing.value && item) {
+  if (isEditing.value) {
     newItem.value = { ...item };
     editingIndex.value = items.value.indexOf(item);
   } else {
@@ -112,8 +115,8 @@ function openDialog(mode = 'add', item = null) {
 }
 
 function saveItem() {
-  const isValid = $refs.form.value.validate();
-  if (isValid) {
+  if (valid.value) {
+    console.log('Form is valid');
     if (isEditing.value) {
       items.value[editingIndex.value] = { ...newItem.value };
     } else {
@@ -130,24 +133,24 @@ function closeDialog() {
 }
 
 function conformDelete(item) {
-  itemToDelete.value = item; 
-  deleteDialog.value = true; 
+  itemToDelete.value = item;
+  deleteDialog.value = true;
 }
 
 function confirmDeleteItem() {
   const index = items.value.indexOf(itemToDelete.value);
   if (index !== -1) {
-    items.value.splice(index, 1); 
+    items.value.splice(index, 1);
   }
   closeDeleteDialog();
 }
 
 function closeDeleteDialog() {
   deleteDialog.value = false;
-  itemToDelete.value = null; 
+  itemToDelete.value = null;
 }
 
 function paginateItems() {
-  
+  // Logic for pagination can go here
 }
 </script>

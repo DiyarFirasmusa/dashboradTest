@@ -10,7 +10,7 @@
       class="bg-white"
     >
       <template v-slot:top>
-        <div class="flex justify-center ">
+        <div class="flex justify-center">
           <v-btn style="margin-top: 0.6rem; height: 55px;" color="blue" @click="openDialog('add')" elevation="0">
             Add New CPU
           </v-btn>
@@ -69,49 +69,50 @@
       <v-card>
         <v-card-title>{{ dialogType === 'add' ? 'Add New CPU' : 'Edit CPU' }}</v-card-title>
         <v-card-text>
-          <v-form ref="form">
+          <v-form v-model="valid">
             <v-text-field
               v-model="newItem.name"
               label="CPU Model"
               :rules="[required]"
+              required
             ></v-text-field>
             <v-text-field
               v-model="newItem.image"
               label="Image URL"
               :rules="[required, validUrl]"
-              
+              required
             ></v-text-field>
             <v-text-field
               v-model="newItem.cores"
               label="Cores"
               type="number"
               :rules="[required, isNumber]"
-              
+              required
             ></v-text-field>
             <v-text-field
               v-model="newItem.threads"
               label="Threads"
               type="number"
               :rules="[required, isNumber]"
-              
+              required
             ></v-text-field>
             <v-text-field
               v-model="newItem.baseClock"
               label="Base Clock"
               :rules="[required, isNumber]"
-              
+              required
             ></v-text-field>
             <v-text-field
               v-model="newItem.boostClock"
               label="Boost Clock"
               :rules="[required, isNumber]"
-              
+              required
             ></v-text-field>
             <v-text-field
               v-model="newItem.tdp"
               label="TDP (W)"
               :rules="[required, isNumber]"
-              
+              required
             ></v-text-field>
           </v-form>
         </v-card-text>
@@ -125,7 +126,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 
 const search = ref('');
 const page = ref(1);
@@ -134,6 +135,8 @@ const dialog = ref(false);
 const confirmDialog = ref(false);
 const dialogType = ref('add');
 const deleteTarget = ref(null);
+const editingIndex = ref(null);
+const valid = ref(false);
 
 const newItem = ref({
   name: '',
@@ -144,8 +147,6 @@ const newItem = ref({
   boostClock: '',
   tdp: ''
 });
-
-const form = ref(null);
 
 const headers = [
   { title: 'Image', align: 'center', key: 'image' },
@@ -160,8 +161,6 @@ const headers = [
 ];
 
 const items = ref([
-  { name: 'CPU 1', image: 'url1', cores: 4, threads: 8, baseClock: '3.6GHz', boostClock: '4.2GHz', tdp: 65 },
-  { name: 'CPU 2', image: 'url2', cores: 6, threads: 12, baseClock: '3.8GHz', boostClock: '4.5GHz', tdp: 95 },
 ]);
 
 const filteredItems = computed(() => {
@@ -183,7 +182,7 @@ function confirmDeleteItem() {
   if (deleteTarget.value) {
     const index = items.value.indexOf(deleteTarget.value);
     if (index !== -1) {
-      items.value.splice(index, 1); 
+      items.value.splice(index, 1);
     }
   }
   confirmDialog.value = false;
@@ -198,7 +197,7 @@ function cancelDelete() {
 function openDialog(type, item = null) {
   dialogType.value = type;
   if (type === 'edit' && item) {
-    editingIndex.value = items.value.indexOf(item); 
+    editingIndex.value = items.value.indexOf(item);
     newItem.value = { ...item };
   } else {
     resetNewItem();
@@ -212,7 +211,10 @@ function closeDialog() {
 }
 
 function saveItem() {
-  if ($refs.form.value.validate()) {
+  // Dynamically check the validity of the form fields
+
+  if (valid.value) {
+    console.log('Form is valid');
     if (dialogType.value === 'add') {
       items.value.push({ ...newItem.value });
       closeDialog();
@@ -220,6 +222,8 @@ function saveItem() {
       items.value.splice(editingIndex.value, 1, { ...newItem.value });
       closeDialog();
     }
+  } else {
+    console.log('Form is invalid');
   }
 }
 
@@ -234,6 +238,7 @@ function resetNewItem() {
     tdp: ''
   };
 }
+
 const required = value => !!value || 'This field is required';
 const isNumber = value => !isNaN(value) || 'This field must be a valid number';
 const validUrl = value => /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/.test(value) || 'Please enter a valid URL';

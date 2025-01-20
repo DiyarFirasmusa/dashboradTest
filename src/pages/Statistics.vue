@@ -12,7 +12,7 @@
         </template>
 
         <v-card title="Edit Statistics" class="bg-white">
-          <v-form ref="form" @submit.prevent="saveChanges">
+          <v-form v-model="vaild">
             <v-container>
               <v-row>
                 <v-col cols="12" md="4">
@@ -76,7 +76,7 @@
 
 <script setup>
 import { ref } from "vue";
-const form = ref()
+const vaild = ref(false)
 const dialog = ref(false);
 const projevtComplate = ref(22);
 const projectStatic = ref(23);
@@ -97,7 +97,7 @@ const cancelDialog = () => {
 };
 
 const saveChanges = () => {
-  if ($refs.form.value.validate()) {
+  if (vaild.value) {
     projevtComplate.value = tempValues.value.projevtComplate;
     projectStatic.value = tempValues.value.projectStatic;
     resantl.value = tempValues.value.resantl;
