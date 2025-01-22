@@ -3,48 +3,69 @@
     <v-data-table
       v-model:page="page"
       :headers="headers"
-      :items="filteredItems"
+      :items="paginatedItems"
       :items-per-page="itemsPerPage"
-      item-value="name"
+      item-value="id"
       :search="search"
       class="bg-white"
     >
       <template v-slot:top>
         <div class="flex justify-center">
-          <v-btn style="margin-top: 0.6rem; height: 55px;" color="blue" @click="openDialog('add')" elevation="0">
-            Add New CPU
+          <v-btn
+            style="margin-top: 0.6rem; height: 55px;"
+            color="blue"
+            @click="openDialog('add')"
+            elevation="0"
+          >
+            Add New Article
           </v-btn>
           <v-row>
             <v-col cols="12" md="12">
-              <v-text-field v-model="search" class="pa-2" label="Search (UPPER CASE ONLY)"></v-text-field>
+              <v-text-field
+                v-model="search"
+                class="pa-2"
+                label="Search by Title"
+              ></v-text-field>
             </v-col>
           </v-row>
         </div>
 
         <v-text-field
-          :model-value="itemsPerPage"
+          v-model.number="itemsPerPage"
           class="pa-2"
           label="Items per page"
           max="15"
-          min="-1"
+          min="1"
           type="number"
           hide-details
-          @update:model-value="itemsPerPage = parseInt($event, 10)"
         ></v-text-field>
       </template>
 
       <template v-slot:item.image="{ item }">
-        <v-avatar size="48">
-          <img :src="item.image" alt="CPU Image">
-        </v-avatar>
+        <v-img
+          :src="item.image"
+          max-height="50"
+          max-width="50"
+          class="rounded"
+        ></v-img>
       </template>
 
       <template v-slot:item.Delete="{ item }">
-        <v-icon icon="delete" color="red" @click="deleteItem(item)" class="ml-2"></v-icon>
+        <v-icon
+          icon="delete"
+          color="red"
+          @click="deleteItem(item)"
+          class="ml-2"
+        ></v-icon>
       </template>
 
       <template v-slot:item.Edit="{ item }">
-        <v-icon icon="edit" color="green" @click="openDialog('edit', item)" class="ml-2"></v-icon>
+        <v-icon
+          icon="edit"
+          color="green"
+          @click="openDialog('edit', item)"
+          class="ml-2"
+        ></v-icon>
       </template>
 
       <template v-slot:bottom>
@@ -54,6 +75,7 @@
       </template>
     </v-data-table>
 
+    <!-- Confirm Delete Dialog -->
     <v-dialog v-model="confirmDialog" max-width="400">
       <v-card>
         <v-card-title class="text-h6">Confirm Delete</v-card-title>
@@ -65,53 +87,28 @@
       </v-card>
     </v-dialog>
 
+    <!-- Add/Edit Article Dialog -->
     <v-dialog v-model="dialog" max-width="500px">
       <v-card>
-        <v-card-title>{{ dialogType === 'add' ? 'Add New CPU' : 'Edit CPU' }}</v-card-title>
+        <v-card-title>{{ dialogType === 'add' ? 'Add New Article' : 'Edit Article' }}</v-card-title>
         <v-card-text>
           <v-form v-model="valid">
             <v-text-field
-              v-model="newItem.name"
-              label="CPU Model"
+              v-model="newItem.title"
+              label="Title"
               :rules="[required]"
               required
             ></v-text-field>
+            <v-textarea
+              v-model="newItem.description"
+              label="Description"
+              :rules="[required]"
+              required
+            ></v-textarea>
             <v-text-field
               v-model="newItem.image"
               label="Image URL"
-              :rules="[required, validUrl]"
-              required
-            ></v-text-field>
-            <v-text-field
-              v-model="newItem.cores"
-              label="Cores"
-              type="number"
-              :rules="[required, isNumber]"
-              required
-            ></v-text-field>
-            <v-text-field
-              v-model="newItem.threads"
-              label="Threads"
-              type="number"
-              :rules="[required, isNumber]"
-              required
-            ></v-text-field>
-            <v-text-field
-              v-model="newItem.baseClock"
-              label="Base Clock"
-              :rules="[required, isNumber]"
-              required
-            ></v-text-field>
-            <v-text-field
-              v-model="newItem.boostClock"
-              label="Boost Clock"
-              :rules="[required, isNumber]"
-              required
-            ></v-text-field>
-            <v-text-field
-              v-model="newItem.tdp"
-              label="TDP (W)"
-              :rules="[required, isNumber]"
+              :rules="[required, validateImage]"
               required
             ></v-text-field>
           </v-form>
@@ -126,7 +123,11 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
+import axios from 'axios';
+
+const API_URL = 'http://ao8kgskw4wcs0ck48sgwg440.194.163.168.91.sslip.io/api/Artical';
+const TOKEN = 'eyJhbGciOiJodHRwOi8vd3d3LnczLm9yZy8yMDAxLzA0L3htbGRzaWctbW9yZSNobWFjLXNoYTUxMiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjQiLCJleHAiOjE3NjkwMTI2NDEsImlzcyI6ImhheWRlcjIwMDIxMi5jb20iLCJhdWQiOiJodHRwczovL2hheWRlcjIwMDIxMi5jb20ifQ.begPYOpkzRRtMe81BhI_pcPMpUe7lXdyjZQE-08kYinXqSRia_xFylPLr2OAPSNviEREkvpQZNy6ms8uJi2VTw';
 
 const search = ref('');
 const page = ref(1);
@@ -139,52 +140,84 @@ const editingIndex = ref(null);
 const valid = ref(false);
 
 const newItem = ref({
-  name: '',
+  id: null,
+  title: '',
+  description: '',
   image: '',
-  cores: null,
-  threads: null,
-  baseClock: '',
-  boostClock: '',
-  tdp: ''
+  createdAt: ''
 });
 
 const headers = [
-  { title: 'Image', align: 'center', key: 'image' },
-  { title: 'CPU Model', align: 'start', key: 'name' },
-  { title: 'Cores', align: 'end', key: 'cores' },
-  { title: 'Threads', align: 'end', key: 'threads' },
-  { title: 'Base Clock', align: 'end', key: 'baseClock' },
-  { title: 'Boost Clock', align: 'end', key: 'boostClock' },
-  { title: 'TDP (W)', align: 'end', key: 'tdp' },
+  { title: 'Title', align: 'start', key: 'title' },
+  { title: 'Description', align: 'start', key: 'description' },
+  { title: 'Image', align: 'start', key: 'image' },
+  { title: 'Created At', align: 'start', key: 'createdAt' },
   { title: 'Delete', key: 'Delete' },
   { title: 'Edit', key: 'Edit' },
 ];
 
-const items = ref([
-]);
+const items = ref([]);
 
-const filteredItems = computed(() => {
-  return items.value.filter(item =>
-    item.name.toUpperCase().includes(search.value.toUpperCase())
-  );
-});
+async function fetchArticles() {
+  try {
+    const response = await axios.get(
+      `${API_URL}?pageNumber=${page.value}&pageSize=${itemsPerPage.value}`,
+      {
+        headers: { Authorization: `Bearer ${TOKEN}` },
+      }
+    );
+    items.value = response.data.data;
+  } catch (error) {
+    console.error('Error fetching articles:', error);
+  }
+}
 
-const pageCount = computed(() => {
-  return Math.ceil(filteredItems.value.length / itemsPerPage.value);
-});
+watch([page, itemsPerPage], fetchArticles);
+
+async function addArticle(article) {
+  try {
+    const { id, ...dataWithoutId } = article;
+    const response = await axios.post(API_URL, dataWithoutId, {
+      headers: { Authorization: `Bearer ${TOKEN}` },
+    });
+    items.value.push(response.data);
+  } catch (error) {
+    console.error('Error adding article:', error);
+  }
+}
+
+async function updateArticle(id, article) {
+  try {
+    const response = await axios.put(`${API_URL}/${id}`, article, {
+      headers: { Authorization: `Bearer ${TOKEN}` },
+    });
+    const index = items.value.findIndex(item => item.id === id);
+    if (index !== -1) items.value[index] = response.data;
+  } catch (error) {
+    console.error('Error updating article:', error);
+  }
+}
+
+async function deleteArticle(id) {
+  try {
+    await axios.delete(`${API_URL}/${id}`, {
+      headers: { Authorization: `Bearer ${TOKEN}` },
+    });
+    items.value = items.value.filter(item => item.id !== id);
+  } catch (error) {
+    console.error('Error deleting article:', error);
+  }
+}
+
+const paginatedItems = computed(() => items.value);
 
 function deleteItem(item) {
   deleteTarget.value = item;
   confirmDialog.value = true;
 }
 
-function confirmDeleteItem() {
-  if (deleteTarget.value) {
-    const index = items.value.indexOf(deleteTarget.value);
-    if (index !== -1) {
-      items.value.splice(index, 1);
-    }
-  }
+async function confirmDeleteItem() {
+  if (deleteTarget.value) await deleteArticle(deleteTarget.value.id);
   confirmDialog.value = false;
   deleteTarget.value = null;
 }
@@ -194,7 +227,7 @@ function cancelDelete() {
   deleteTarget.value = null;
 }
 
-function openDialog(type, item = null) {
+function openDialog(type, item) {
   dialogType.value = type;
   if (type === 'edit' && item) {
     editingIndex.value = items.value.indexOf(item);
@@ -210,36 +243,42 @@ function closeDialog() {
   resetNewItem();
 }
 
-function saveItem() {
-  // Dynamically check the validity of the form fields
-
+async function saveItem() {
   if (valid.value) {
-    console.log('Form is valid');
     if (dialogType.value === 'add') {
-      items.value.push({ ...newItem.value });
-      closeDialog();
+      await addArticle({ ...newItem.value });
     } else if (dialogType.value === 'edit' && editingIndex.value !== -1) {
-      items.value.splice(editingIndex.value, 1, { ...newItem.value });
-      closeDialog();
+      await updateArticle(newItem.value.id, { ...newItem.value });
     }
-  } else {
-    console.log('Form is invalid');
+    closeDialog();
+    fetchArticles();
   }
 }
 
 function resetNewItem() {
   newItem.value = {
-    name: '',
+    id: null,
+    title: '',
+    description: '',
     image: '',
-    cores: null,
-    threads: null,
-    baseClock: '',
-    boostClock: '',
-    tdp: ''
+    createdAt: ''
   };
 }
 
 const required = value => !!value || 'This field is required';
-const isNumber = value => !isNaN(value) || 'This field must be a valid number';
-const validUrl = value => /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/.test(value) || 'Please enter a valid URL';
+const validateImage = (value) => {
+  const urlPattern = new RegExp(
+    '^(https?:\\/\\/)?' + // Protocol
+    '((([a-z\\d]([a-z\\d-]*[a-z\\d])*))\\.)*' + // Subdomain and domain name
+    '[a-z]{2,}' + // TLD
+    '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + // Port and path
+    '(\\?[;&a-z\\d%_.~+=-]*)?' + // Query string
+    '(\\#[-a-z\\d_]*)?$',
+    'i'
+  );
+  return urlPattern.test(value) || 'Invalid image URL';
+};
+
+
+onMounted(fetchArticles);
 </script>
