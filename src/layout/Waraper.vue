@@ -5,9 +5,9 @@
           <v-icon icon="$vuetify" size="x-large" color="blue"></v-icon>
           <h1  class ="text-xl">Vercal Pro</h1>
         </v-sheet>
-  
+
         <v-divider></v-divider>
-  
+
         <v-list class="p-2">
           <v-list-item
             v-for="[icon, text, path] in links"
@@ -43,7 +43,7 @@
                       <v-list-item-title @click="handlenavigate" class="p-2 w-44">Settings</v-list-item-title>
                     </v-list-item>
                     <v-list-item class="bg-grey-lighten-2 hover-effect" :value="2">
-                      <v-list-item-title @click="handlenavigate" class="p-2 w-44">Logout</v-list-item-title>
+                      <v-list-item-title @click="handleLogout" class="p-2 w-44">Logout</v-list-item-title>
                     </v-list-item>
                   </v-list>
                </v-menu>
@@ -52,27 +52,30 @@
           <v-btn icon="dark_mode"></v-btn>
         </template>
       </v-app-bar>
-  
-      <v-main class="">     
+
+      <v-main class="">
         <div class=" p-4">
-            <slot/>
+            <slot />
         </div>
       </v-main>
     </v-app>
   </template>
-  
+
   <script setup>
     import { ref } from 'vue'
+    import { useAuth } from '../useAuth'; // Import useAuth here
 
     defineProps({
       show: Boolean
     })
-  
-    const items = [
-      { title: 'Profile' },
-      { title: 'Settings' },
-      { title: 'Log Out' },
-    ]
+
+    const { logout } = useAuth();
+
+    const handleLogout = async () => {
+      await logout();
+      // Redirect to login page after logout
+      console.log('hhhh')
+    };
 
 
     const links = [
@@ -84,9 +87,11 @@
       ['import_contacts', 'Artacl' , '/Artacl'],
       ['info', 'About' , '/About'],
     ]
-  
+
     const drawer = ref(null)
   </script>
+
+
   <style>
     .custom-vSheet {
       padding: 1.24rem !important;
@@ -94,7 +99,7 @@
   .custom-btn {
     font-size: 18px !important;
   }
-  
+
   .custom-avatar {
     border: 2px solid #1976D2 !important;
     width: 35px !important;
